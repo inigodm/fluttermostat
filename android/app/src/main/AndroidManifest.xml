@@ -2,6 +2,8 @@
     package="com.example.fluthermostat">
     <uses-permission android:name="android.permission.INTERNET" />
     <application
+        android:usesCleartextTraffic="true"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:label="fluthermostat"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">

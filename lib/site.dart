@@ -12,6 +12,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  static String baseUrl = Platform.isAndroid
+      ? "http://192.168.1.136:8080"
+      : "http://localhost:8080";
   @override
   Widget build(BuildContext context) {
     return Scaffold(

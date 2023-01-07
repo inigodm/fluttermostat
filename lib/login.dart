@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:fluthermostat/site.dart';
 import 'package:flutter/cupertino.dart';
@@ -28,7 +29,9 @@ class Login extends StatefulWidget {
 class _LoginState extends State<Login> {
   String bearer = "";
   String errorText = "";
-  static const String baseUrl = "http://localhost:8080";
+  static String baseUrl = Platform.isAndroid
+      ? "http://192.168.1.136:8080"
+      : "http://localhost:8080";
   final nameController = TextEditingController();
   final passController = TextEditingController();
 
