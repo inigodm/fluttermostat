@@ -3,6 +3,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:multi_select_flutter/multi_select_flutter.dart';
+import 'package:numberpicker/numberpicker.dart';
+
 
 class HomePage extends StatefulWidget {
   late String bearer;
@@ -23,6 +26,28 @@ class _HomePageState extends State<HomePage> {
   late int temp;
   final List<Widget> _pages = [];
   int _selectedIndex = 0;
+  TextEditingController initTime = TextEditingController();
+  TextEditingController endTime = TextEditingController();
+
+
+  Future displayTimePicker(BuildContext context, TextEditingController control) async {
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+          child: child ?? Container(),
+        );
+      },
+    );
+
+    if (time != null) {
+      setState(() {
+        control.text = "${time.hour}:${time.minute}";
+      });
+    }
+  }
 
   _HomePageState(String bearer) {
     this.bearer = bearer;
@@ -41,26 +66,91 @@ class _HomePageState extends State<HomePage> {
               onPressed: increase,
               child: Text(
                 '+',
-                style: TextStyle(color: Colors.black, fontSize: 45),
+                style: TextStyle(color: Colors.black, fontFamily: 'Digital', fontSize: 45),
               ),
             ),
             Text(
                 "${temp}",
-                style: TextStyle(color: Colors.black, fontSize: 45)),
+                style: TextStyle(color: Colors.black, fontFamily: 'Digital', fontSize: 45)),
             TextButton(
               onPressed: decrease,
               child: Text(
                 '-',
-                style: TextStyle(color: Colors.black, fontSize: 45),
+                style: TextStyle(color: Colors.black, fontFamily: 'Digital', fontSize: 45),
               ),
             ),
           ],
         )
       ],
     );
-    Widget graph = Text("Test text");
+    Widget schedules = Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [Expanded(
+              child: TextField(
+                controller: initTime,
+                decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Start time',
+                    hintText: 'Select start time'
+                ),
+                onTap: () => displayTimePicker(context, initTime),
+              ),
+              )]
+            ),
+          Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [Expanded(
+                child: TextField(
+                  controller: endTime,
+                  decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: 'End time',
+                      hintText: 'Select end time'
+                  ),
+                  onTap: () => displayTimePicker(context, endTime),
+                ),
+              )]
+          ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [Text("Desired temperature"),
+              NumberPicker(
+              value: 15,
+              minValue: 10,
+              maxValue: 30,
+              onChanged: (value) => setState(() => {}),
+            )],
+          ),
+          Padding(
+            padding: EdgeInsets.all(10),
+            child: MultiSelectDialogField(
+              title: Text("Select the days in which this task must be enabled"),
+              buttonText: Text("Days"),
+              items: [MultiSelectItem("L", "Monday"),
+                MultiSelectItem("M", "Tuesday"),
+                MultiSelectItem("X", "Thursday"),
+                MultiSelectItem("J", "Wednesday"),
+                MultiSelectItem("V", "Friday"),
+                MultiSelectItem("S", "Saturday"),
+                MultiSelectItem("D", "Sunday"),
+              ],
+              listType: MultiSelectListType.CHIP,
+              onConfirm: (values) {
+
+              },
+            ),
+          ),
+      ]
+    );
     _pages.add(home);
-    _pages.add(graph);
+    _pages.add(schedules);
+    _pages.add(Text("Test text"));
   }
 
 
@@ -81,6 +171,23 @@ class _HomePageState extends State<HomePage> {
     setState(() {});
   }
 
+  void getDesiredValue() async {
+    final url = Uri.parse("$baseUrl/temperature");
+    final response = await http.get(url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': this.bearer,
+        });
+    if (response.statusCode == 200) {
+      print("body ${jsonDecode(response.body)['value']['temp']}");
+    } else {
+      print("body ${response.toString()}");
+      print("body ${response.body}");
+    }
+    temp++;
+    setState(() {});
+  }
+
   void decrease() async {
     final url = Uri.parse("$baseUrl/temperature/decrement");
     final response = await http.put(url,
@@ -92,7 +199,9 @@ class _HomePageState extends State<HomePage> {
           "temperature": 100,
         }));
     if (response.statusCode == 200) {
+      getDesiredValue();
     } else {
+
     }
     temp--;
     setState(() {});
@@ -109,6 +218,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Thermostat'),
+        automaticallyImplyLeading: false,
       ),
       // El body tiene que tener el array con el indice seleccionado
       body: Center(child: _pages[_selectedIndex]),
@@ -117,6 +227,10 @@ class _HomePageState extends State<HomePage> {
             BottomNavigationBarItem(
               icon: Icon(Icons.home),
               label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Schedules',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.auto_graph_rounded),
