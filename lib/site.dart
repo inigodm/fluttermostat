@@ -10,9 +10,8 @@ import 'package:numberpicker/numberpicker.dart';
 class HomePage extends StatefulWidget {
   late String bearer;
 
-  HomePage(String bearer) {
-    this.bearer = bearer;
-  }
+  //Constructor
+  HomePage(this.bearer, {super.key});
 
   @override
   _HomePageState createState() => _HomePageState(bearer);
@@ -23,12 +22,11 @@ class _HomePageState extends State<HomePage> {
       ? "http://192.168.1.136:8080"
       : "http://localhost:8080";
   late String bearer;
-  late int temp;
+  int temp = 0;
   final List<Widget> _pages = [];
   int _selectedIndex = 0;
   TextEditingController initTime = TextEditingController();
   TextEditingController endTime = TextEditingController();
-
 
   Future displayTimePicker(BuildContext context, TextEditingController control) async {
     final time = await showTimePicker(
@@ -49,12 +47,71 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  _HomePageState(String bearer) {
-    this.bearer = bearer;
-    this.temp = 22;
+  _HomePageState(this.bearer) {
+    getDesiredValue();
+    }
+
+  void increase() async {
+    final url = Uri.parse("$baseUrl/temperature/increment");
+    final response = await http.put(url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': bearer,
+        },
+        body: jsonEncode(<String, int> {
+          "temperature": 100,
+        }));
+    if (response.statusCode == 200) {
+      getDesiredValue();
+      setState(() {
+        temp++;
+      });
+    }
+  }
+
+  void getDesiredValue() async {
+    final url = Uri.parse("$baseUrl/temperature");
+    final response = await http.get(url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': bearer,
+        });
+    setState(() {
+      if (response.statusCode == 200) {
+        temp = (jsonDecode(response.body)['value']['temp']/100).round();
+      }
+    });
+  }
+
+  void decrease() async {
+    final url = Uri.parse("$baseUrl/temperature/decrement");
+    final response = await http.put(url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': bearer,
+        },
+        body: jsonEncode(<String, int> {
+          "temperature": 100,
+        }));
+    if (response.statusCode == 200) {
+      getDesiredValue();
+      setState(() {
+        temp--;
+      });
+    }
+  }
+
+  void _onItemTapped(int item) {
+    setState(() {
+      _selectedIndex = item;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     Widget home = Column(
       children: <Widget>[
-        Padding(
+        const Padding(
           padding: EdgeInsets.all(10),
           child: Text("Test text"),
         ),
@@ -64,17 +121,18 @@ class _HomePageState extends State<HomePage> {
           children: [
             TextButton(
               onPressed: increase,
-              child: Text(
+              child: const Text(
                 '+',
                 style: TextStyle(color: Colors.black, fontFamily: 'Digital', fontSize: 45),
               ),
             ),
             Text(
-                "${temp}",
-                style: TextStyle(color: Colors.black, fontFamily: 'Digital', fontSize: 45)),
+                "$temp",
+                key: const Key("textKey"),
+                style: const TextStyle(color: Colors.black, fontFamily: 'Digital', fontSize: 45)),
             TextButton(
               onPressed: decrease,
-              child: Text(
+              child: const Text(
                 '-',
                 style: TextStyle(color: Colors.black, fontFamily: 'Digital', fontSize: 45),
               ),
@@ -87,27 +145,27 @@ class _HomePageState extends State<HomePage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [Expanded(
-              child: TextField(
-                controller: initTime,
-                decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Start time',
-                    hintText: 'Select start time'
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [Expanded(
+                child: TextField(
+                  controller: initTime,
+                  decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: 'Start time',
+                      hintText: 'Select start time'
+                  ),
+                  onTap: () => displayTimePicker(context, initTime),
                 ),
-                onTap: () => displayTimePicker(context, initTime),
-              ),
               )]
-            ),
+          ),
           Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [Expanded(
                 child: TextField(
                   controller: endTime,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       labelText: 'End time',
                       hintText: 'Select end time'
@@ -119,19 +177,19 @@ class _HomePageState extends State<HomePage> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [Text("Desired temperature"),
+            children: [const Text("Desired temperature"),
               NumberPicker(
-              value: 15,
-              minValue: 10,
-              maxValue: 30,
-              onChanged: (value) => setState(() => {}),
-            )],
+                value: 15,
+                minValue: 10,
+                maxValue: 30,
+                onChanged: (value) => setState(() => {}),
+              )],
           ),
           Padding(
-            padding: EdgeInsets.all(10),
+            padding: const EdgeInsets.all(10),
             child: MultiSelectDialogField(
-              title: Text("Select the days in which this task must be enabled"),
-              buttonText: Text("Days"),
+              title: const Text("Select the days in which this task must be enabled"),
+              buttonText: const Text("Days"),
               items: [MultiSelectItem("L", "Monday"),
                 MultiSelectItem("M", "Tuesday"),
                 MultiSelectItem("X", "Thursday"),
@@ -146,84 +204,21 @@ class _HomePageState extends State<HomePage> {
               },
             ),
           ),
-      ]
+        ]
     );
+    _pages.clear();
     _pages.add(home);
     _pages.add(schedules);
-    _pages.add(Text("Test text"));
-  }
-
-
-  void increase() async {
-    final url = Uri.parse("$baseUrl/temperature/increment");
-    final response = await http.put(url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': this.bearer,
-        },
-        body: jsonEncode(<String, int> {
-          "temperature": 100,
-        }));
-    if (response.statusCode == 200) {
-    } else {
-    }
-    temp++;
-    setState(() {});
-  }
-
-  void getDesiredValue() async {
-    final url = Uri.parse("$baseUrl/temperature");
-    final response = await http.get(url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': this.bearer,
-        });
-    if (response.statusCode == 200) {
-      print("body ${jsonDecode(response.body)['value']['temp']}");
-    } else {
-      print("body ${response.toString()}");
-      print("body ${response.body}");
-    }
-    temp++;
-    setState(() {});
-  }
-
-  void decrease() async {
-    final url = Uri.parse("$baseUrl/temperature/decrement");
-    final response = await http.put(url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': this.bearer,
-        },
-        body: jsonEncode(<String, int> {
-          "temperature": 100,
-        }));
-    if (response.statusCode == 200) {
-      getDesiredValue();
-    } else {
-
-    }
-    temp--;
-    setState(() {});
-  }
-
-  void _onItemTapped(int item) {
-    setState(() {
-      this._selectedIndex = item;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
+    _pages.add(const Text("Test text"));
     return Scaffold(
       appBar: AppBar(
-        title: Text('Thermostat'),
+        title: const Text('Thermostat'),
         automaticallyImplyLeading: false,
       ),
       // El body tiene que tener el array con el indice seleccionado
       body: Center(child: _pages[_selectedIndex]),
         bottomNavigationBar: BottomNavigationBar(
-          items: [
+          items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.home),
               label: 'Home',

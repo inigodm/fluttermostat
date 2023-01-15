@@ -92,7 +92,7 @@ class _LoginState extends State<Login> {
             Container(
               height: 150.0,
               width: 190.0,
-              padding: EdgeInsets.only(top: 40),
+              padding: const EdgeInsets.only(top: 40),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(200),
               ),
@@ -105,7 +105,7 @@ class _LoginState extends State<Login> {
               padding: EdgeInsets.all(10),
               child: TextField(
                 controller: nameController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     labelText: 'User Name',
                     hintText: 'Enter valid user name'
@@ -117,7 +117,7 @@ class _LoginState extends State<Login> {
               child: TextField(
                 controller: passController,
                 obscureText: true,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     labelText: 'Password',
                     hintText: 'Enter your password'
@@ -125,8 +125,8 @@ class _LoginState extends State<Login> {
               ),
             ),
             Padding(
-              padding: EdgeInsets.all(10),
-              child: Text(errorText,style: TextStyle(fontWeight: FontWeight.bold, color: Color.fromRGBO(255, 0, 0, 1.0)), textAlign: TextAlign.left),
+              padding: const EdgeInsets.all(10),
+              child: Text(errorText,style: const TextStyle(fontWeight: FontWeight.bold, color: Color.fromRGBO(255, 0, 0, 1.0)), textAlign: TextAlign.left),
             ),
             Container(
               height: 50,
@@ -135,7 +135,7 @@ class _LoginState extends State<Login> {
                   color: Colors.blue, borderRadius: BorderRadius.circular(20)),
               child: TextButton(
                 onPressed: _tryLogin,
-                child: Text(
+                child: const Text(
                   'Login',
                   style: TextStyle(color: Colors.white, fontSize: 25),
                 ),
