@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:fluthermostat/pages/GraphPage.dart';
+import 'package:fluthermostat/pages/Thermostat.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:multi_select_flutter/multi_select_flutter.dart';
@@ -22,11 +24,13 @@ class _HomePageState extends State<HomePage> {
       ? "http://192.168.1.136:8080"
       : "http://localhost:8080";
   late String bearer;
-  int temp = 0;
   final List<Widget> _pages = [];
   int _selectedIndex = 0;
   TextEditingController initTime = TextEditingController();
   TextEditingController endTime = TextEditingController();
+  int desiredTemp = 15;
+  List<String> weekDays = [];
+  late bool active = true;
 
   Future displayTimePicker(BuildContext context, TextEditingController control) async {
     final time = await showTimePicker(
@@ -51,53 +55,24 @@ class _HomePageState extends State<HomePage> {
     getDesiredValue();
     }
 
-  void increase() async {
-    final url = Uri.parse("$baseUrl/temperature/increment");
-    final response = await http.put(url,
+  void sendSchedule() async {
+    final url = Uri.parse("$baseUrl/schedule");
+    final response = await http.post(url,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': bearer,
         },
-        body: jsonEncode(<String, int> {
-          "temperature": 100,
+        body: jsonEncode( {
+          "dateFrom": "2022-01-02",
+          "dateTo": "2022-03-02",
+          "timeFrom": initTime.text,
+          "timeTo": endTime.text,
+          "active": active,
+          "minTemp": desiredTemp,
+          "weekDays": weekDays
         }));
     if (response.statusCode == 200) {
-      getDesiredValue();
-      setState(() {
-        temp++;
-      });
-    }
-  }
-
-  void getDesiredValue() async {
-    final url = Uri.parse("$baseUrl/temperature");
-    final response = await http.get(url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': bearer,
-        });
-    setState(() {
-      if (response.statusCode == 200) {
-        temp = (jsonDecode(response.body)['value']['temp']/100).round();
-      }
-    });
-  }
-
-  void decrease() async {
-    final url = Uri.parse("$baseUrl/temperature/decrement");
-    final response = await http.put(url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': bearer,
-        },
-        body: jsonEncode(<String, int> {
-          "temperature": 100,
-        }));
-    if (response.statusCode == 200) {
-      getDesiredValue();
-      setState(() {
-        temp--;
-      });
+      print("OK response");
     }
   }
 
@@ -109,38 +84,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    Widget home = Column(
-      children: <Widget>[
-        const Padding(
-          padding: EdgeInsets.all(10),
-          child: Text("Test text"),
-        ),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            TextButton(
-              onPressed: increase,
-              child: const Text(
-                '+',
-                style: TextStyle(color: Colors.black, fontFamily: 'Digital', fontSize: 45),
-              ),
-            ),
-            Text(
-                "$temp",
-                key: const Key("textKey"),
-                style: const TextStyle(color: Colors.black, fontFamily: 'Digital', fontSize: 45)),
-            TextButton(
-              onPressed: decrease,
-              child: const Text(
-                '-',
-                style: TextStyle(color: Colors.black, fontFamily: 'Digital', fontSize: 45),
-              ),
-            ),
-          ],
-        )
-      ],
-    );
     Widget schedules = Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
@@ -179,10 +122,12 @@ class _HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [const Text("Desired temperature"),
               NumberPicker(
-                value: 15,
+                value: desiredTemp,
                 minValue: 10,
                 maxValue: 30,
-                onChanged: (value) => setState(() => {}),
+                onChanged: (value) => setState(() => {
+                  desiredTemp = value
+                }),
               )],
           ),
           Padding(
@@ -200,16 +145,39 @@ class _HomePageState extends State<HomePage> {
               ],
               listType: MultiSelectListType.CHIP,
               onConfirm: (values) {
-
+                weekDays = values;
               },
+            ),
+          ),
+          CheckboxListTile(
+            title: Text("Active"),
+            value: active,
+            onChanged: (newValue) {
+              setState(() {
+                active = newValue!;
+              });
+            },
+            controlAffinity: ListTileControlAffinity.leading,  //  <-- leading Checkbox
+          ),
+          Container(
+            height: 50,
+            width: 250,
+            decoration: BoxDecoration(
+                color: Colors.blue, borderRadius: BorderRadius.circular(20)),
+            child: TextButton(
+              onPressed: sendSchedule,
+              child: const Text(
+                'Accept',
+                style: TextStyle(color: Colors.white, fontSize: 25),
+              ),
             ),
           ),
         ]
     );
     _pages.clear();
-    _pages.add(home);
+    _pages.add(Thermostat(baseUrl, bearer));
     _pages.add(schedules);
-    _pages.add(const Text("Test text"));
+    _pages.add(GraphPage.build());
     return Scaffold(
       appBar: AppBar(
         title: const Text('Thermostat'),
