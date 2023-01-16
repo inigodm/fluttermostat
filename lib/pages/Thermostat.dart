@@ -18,7 +18,10 @@ class _ThermostatPage  extends State<Thermostat>{
   String bearer;
   String baseUrl;
   int temp = 10;
-  _ThermostatPage(this.bearer, this.baseUrl);
+
+  _ThermostatPage(this.bearer, this.baseUrl){
+    getDesiredValue();
+  }
 
   void getDesiredValue() async {
     final url = Uri.parse("$baseUrl/temperature");
