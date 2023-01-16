@@ -1,6 +1,8 @@
 import 'package:fluthermostat/pages/SchedulesForm.dart';
 import 'package:flutter/material.dart';
 
+import 'ScheduleList.dart';
+
 class SchedulesPage extends StatefulWidget {
   String bearer;
   String baseUrl;
@@ -8,21 +10,29 @@ class SchedulesPage extends StatefulWidget {
   SchedulesPage(this.baseUrl, this.bearer);
 
   @override
-  State<StatefulWidget> createState() => _SchedulesForm(bearer, baseUrl);
+  State<StatefulWidget> createState() => _SchedulesPage(bearer, baseUrl);
 }
 
-class _SchedulesForm extends State<SchedulesPage> {
+class _SchedulesPage extends State<SchedulesPage> {
   String bearer;
   String baseUrl;
+  late SchedulesForm form;
+  late SchedulesList list;
 
-  _SchedulesForm(this.bearer, this.baseUrl);
+  _SchedulesPage(this.bearer, this.baseUrl){
+    form = SchedulesForm(baseUrl, bearer);
+    list = SchedulesList(baseUrl, bearer);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          SchedulesForm(baseUrl, bearer),
+          form,
+          Expanded(
+            child: list
+          )
         ]
     );
   }
