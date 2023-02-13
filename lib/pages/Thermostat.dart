@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -18,9 +18,25 @@ class _ThermostatPage  extends State<Thermostat>{
   String bearer;
   String baseUrl;
   int temp = 10;
+  String roomTemp = "0.00";
 
   _ThermostatPage(this.bearer, this.baseUrl){
     getDesiredValue();
+    getRoomTemperatureValue();
+  }
+
+  Timer? timer;
+
+  @override
+  void initState() {
+    super.initState();
+    timer = Timer.periodic(const Duration(seconds: 5), (Timer t) => getRoomTemperatureValue());
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
   }
 
   void getDesiredValue() async {
@@ -73,13 +89,28 @@ class _ThermostatPage  extends State<Thermostat>{
     }
   }
 
+  void getRoomTemperatureValue() async {
+    final url = Uri.parse("$baseUrl/room-temperature");
+    final response = await http.get(url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': bearer,
+        });
+    setState(() {
+      if (response.statusCode == 200) {
+        roomTemp = jsonDecode(response.body)['value']['temp'];
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-        const Padding(
+        Padding(
           padding: EdgeInsets.all(10),
-          child: Text("Test text"),
+          child: Text("Temp: ${roomTemp}C",
+            style: TextStyle(color: Colors.black, fontFamily: 'Digital'),),
         ),
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,

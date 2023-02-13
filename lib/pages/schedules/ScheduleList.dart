@@ -1,27 +1,35 @@
 import 'package:fluthermostat/Schedule.dart';
-import 'package:fluthermostat/pages/SchedulesItem.dart';
+import 'package:fluthermostat/pages/schedules/SchedulesItem.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'listener/ScheduleEvent.dart';
+import 'listener/SchedulesSubscriber.dart';
+
 class SchedulesList extends StatefulWidget {
   String bearer;
   String baseUrl;
+  SchedulesSubscriber subscriber;
 
-  SchedulesList(this.baseUrl, this.bearer);
+  SchedulesList(this.baseUrl, this.bearer, this.subscriber, {super.key});
 
   @override
-  State<StatefulWidget> createState() => _SchedulesList(bearer, baseUrl);
+  State<StatefulWidget> createState() => _SchedulesList(bearer, baseUrl, subscriber);
 
 }
 
 class _SchedulesList  extends State<SchedulesList>{
   String bearer;
   String baseUrl;
+  SchedulesSubscriber subscriber;
   List<ScheduleItem> items = [];
 
-  _SchedulesList(this.bearer, this.baseUrl){
+  _SchedulesList(this.bearer, this.baseUrl, this.subscriber){
    loadSchedules();
+   subscriber.subscribeToCreation((event) => {
+     loadSchedules()
+   });
   }
 
   void deleteSchedule(Schedule schedule) async {
@@ -44,6 +52,9 @@ class _SchedulesList  extends State<SchedulesList>{
             'Authorization': bearer,
           });
       if (response.statusCode == 200) {
+        if (jsonDecode(response.body)["value"] == null) {
+          return;
+        }
         List results = jsonDecode(response.body)["value"] as List;
         if (results.isNotEmpty) {
           setState(() {
@@ -57,7 +68,9 @@ class _SchedulesList  extends State<SchedulesList>{
                     item["active"],
                     item["minTemp"]))
                 .map((schedule) =>
-                ScheduleItem(schedule, (schedule) => { }, (schedule) => { deleteSchedule(schedule) }))
+                ScheduleItem(schedule,
+                        (schedule) => { subscriber.push(ScheduleSelected(schedule)) },
+                        (schedule) => { deleteSchedule }))
                 .toList();
           });
         }

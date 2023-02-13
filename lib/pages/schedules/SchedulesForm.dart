@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:fluthermostat/pages/schedules/listener/ScheduleEvent.dart';
+import 'package:fluthermostat/pages/schedules/listener/SchedulesSubscriber.dart';
 import 'package:flutter/material.dart';
 import 'package:multi_select_flutter/dialog/multi_select_dialog_field.dart';
 import 'package:multi_select_flutter/util/multi_select_item.dart';
@@ -7,20 +9,23 @@ import 'package:multi_select_flutter/util/multi_select_list_type.dart';
 import 'package:numberpicker/numberpicker.dart';
 import 'package:http/http.dart' as http;
 
+import '../../Schedule.dart';
+
 class SchedulesForm extends StatefulWidget {
   String bearer;
   String baseUrl;
+  SchedulesSubscriber subscriber;
 
-  SchedulesForm(this.baseUrl, this.bearer);
+  SchedulesForm(this.baseUrl, this.bearer, this.subscriber, {super.key});
 
   @override
-  State<StatefulWidget> createState() => _SchedulesForm(bearer, baseUrl);
-
+  State<StatefulWidget> createState() => _SchedulesForm(bearer, baseUrl, subscriber);
 }
 
 class _SchedulesForm  extends State<SchedulesForm>{
   String bearer;
   String baseUrl;
+  SchedulesSubscriber subscriber;
 
   TextEditingController initTime = TextEditingController();
   TextEditingController endTime = TextEditingController();
@@ -29,7 +34,21 @@ class _SchedulesForm  extends State<SchedulesForm>{
   List<String> weekDays = [];
   late bool active = true;
 
-  _SchedulesForm(this.bearer, this.baseUrl);
+  _SchedulesForm(this.bearer, this.baseUrl, this.subscriber){
+    subscriber.subscribeToSelection((event) => {
+      setState(() => {
+        _loadFromEvent(event)
+      })
+    });
+  }
+
+  void _loadFromEvent(ScheduleEvent event) {
+    desiredTemp = event.schedule.desiredTemp;
+    initTime.text = event.schedule.timeFrom;
+    endTime.text = event.schedule.timeTo;
+    active = event.schedule.active;
+    weekDays = event.schedule.weekDays.split("");
+  }
 
   Future displayTimePicker(BuildContext context, TextEditingController control) async {
     final time = await showTimePicker(
@@ -52,22 +71,26 @@ class _SchedulesForm  extends State<SchedulesForm>{
 
   void sendSchedule() async {
     final url = Uri.parse("$baseUrl/schedule");
+    Schedule schedule = Schedule(null,
+        initTime.text,
+        endTime.text,
+        weekDays.toString(),
+        active,
+        desiredTemp);
     final response = await http.post(url,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': bearer,
         },
         body: jsonEncode( {
-          "dateFrom": "2022-01-02",
-          "dateTo": "2022-03-02",
-          "timeFrom": initTime.text,
-          "timeTo": endTime.text,
-          "active": active,
-          "minTemp": desiredTemp,
-          "weekDays": weekDays
+          "timeFrom": schedule.timeFrom,
+          "timeTo": schedule.timeTo,
+          "active": schedule.active,
+          "minTemp": schedule.desiredTemp,
+          "weekDays": schedule.weekDays.replaceAll(" ", "").replaceAll("[", "").replaceAll("]", "")
         }));
     if (response.statusCode == 200) {
-      print("OK response");
+      subscriber.push(ScheduleCreated(schedule));
     }
   }
 

@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:fluthermostat/pages/GraphPage.dart';
-import 'package:fluthermostat/pages/SchedulesPage.dart';
+import 'package:fluthermostat/pages/schedules/SchedulesPage.dart';
 import 'package:fluthermostat/pages/Thermostat.dart';
 import 'package:flutter/material.dart';
 

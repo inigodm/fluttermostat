@@ -1,16 +1,16 @@
 import 'package:fluthermostat/pages/schedules/listener/ScheduleEvent.dart';
 
 class SchedulesSubscriber{
-  List<Function(ScheduleEvent)> onCreateSubscribers = List.empty(growable: true);
-  List<Function(ScheduleEvent)> onSelectedSubscribers = List.empty(growable: true);
-  List<Function(ScheduleEvent)> onDeletedSubscribers = List.empty(growable: true);
+  List<Function(ScheduleEvent)> _onCreateSubscribers = List.empty(growable: true);
+  List<Function(ScheduleEvent)> _onSelectedSubscribers = List.empty(growable: true);
+  List<Function(ScheduleEvent)> _onDeletedSubscribers = List.empty(growable: true);
 
   void subscribeToCreation(Function(ScheduleEvent) scheduleObserver) {
-    onCreateSubscribers.add(scheduleObserver);
+    _onCreateSubscribers.add(scheduleObserver);
   }
 
   void subscribeToSelection(Function(ScheduleEvent) scheduleObserver) {
-    onSelectedSubscribers.add(scheduleObserver);
+    _onSelectedSubscribers.add(scheduleObserver);
   }
 
   void push(ScheduleEvent event) async {
@@ -20,14 +20,14 @@ class SchedulesSubscriber{
   }
 
   void _onCreate(ScheduleCreated event) {
-    for (var subscriber in onCreateSubscribers) { subscriber.call(event); }
+    for (var subscriber in _onCreateSubscribers) { subscriber.call(event); }
   }
 
   void _onSelected(ScheduleSelected event) {
-    for (var subscriber in onSelectedSubscribers) { subscriber.call(event); }
+    for (var subscriber in _onSelectedSubscribers) { subscriber.call(event); }
   }
 
   void _onDeleted(ScheduleDeleted event) {
-    for (var subscriber in onDeletedSubscribers) { subscriber.call(event); }
+    for (var subscriber in _onDeletedSubscribers) { subscriber.call(event); }
   }
 }
