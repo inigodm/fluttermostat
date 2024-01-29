@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -7,7 +8,7 @@ class Thermostat extends StatefulWidget {
   String bearer;
   String baseUrl;
 
-  Thermostat(this.baseUrl, this.bearer);
+  Thermostat(this.baseUrl, this.bearer, {super.key});
 
   @override
   State<StatefulWidget> createState() => _ThermostatPage(bearer, baseUrl);
@@ -17,20 +18,21 @@ class Thermostat extends StatefulWidget {
 class _ThermostatPage  extends State<Thermostat>{
   String bearer;
   String baseUrl;
-  int temp = 10;
+  int targetTemp = 10;
+  String externalTemp = "0.00";
   String roomTemp = "0.00";
+  Timer? timer;
 
   _ThermostatPage(this.bearer, this.baseUrl){
     getDesiredValue();
-    getRoomTemperatureValue();
+    refreshThermostateStatus();
   }
 
-  Timer? timer;
 
   @override
   void initState() {
     super.initState();
-    timer = Timer.periodic(const Duration(seconds: 5), (Timer t) => getRoomTemperatureValue());
+    timer = Timer.periodic(const Duration(seconds: 5), (Timer t) => refreshThermostateStatus());
   }
 
   @override
@@ -48,7 +50,7 @@ class _ThermostatPage  extends State<Thermostat>{
         });
     setState(() {
       if (response.statusCode == 200) {
-        temp = (jsonDecode(response.body)['value']['temp']/100).round();
+        targetTemp = (jsonDecode(response.body)['value']['temp']/100).round();
       }
     });
   }
@@ -66,7 +68,7 @@ class _ThermostatPage  extends State<Thermostat>{
     if (response.statusCode == 200) {
       getDesiredValue();
       setState(() {
-        temp++;
+        targetTemp++;
       });
     }
   }
@@ -84,13 +86,13 @@ class _ThermostatPage  extends State<Thermostat>{
     if (response.statusCode == 200) {
       getDesiredValue();
       setState(() {
-        temp--;
+        targetTemp--;
       });
     }
   }
 
-  void getRoomTemperatureValue() async {
-    final url = Uri.parse("$baseUrl/room-temperature");
+  void refreshThermostateStatus() async {
+    final url = Uri.parse("$baseUrl/status");
     final response = await http.get(url,
         headers: {
           'Content-Type': 'application/json',
@@ -98,7 +100,10 @@ class _ThermostatPage  extends State<Thermostat>{
         });
     setState(() {
       if (response.statusCode == 200) {
-        roomTemp = jsonDecode(response.body)['value']['temp'];
+        String tempStr = jsonDecode(response.body)['value']['currentTemperature']['temp'].toString();
+        roomTemp = "${tempStr.substring(0, tempStr.length - 2)}.${tempStr.substring(tempStr.length - 2)}";
+        targetTemp = (jsonDecode(response.body)['value']['targetTemperature']['temp'] / 100).toInt();
+        externalTemp = jsonDecode(response.body)['value']['externalTemperature']['temp'].toString();
       }
     });
   }
@@ -112,6 +117,11 @@ class _ThermostatPage  extends State<Thermostat>{
           child: Text("Temp: ${roomTemp}C",
             style: TextStyle(color: Colors.black, fontFamily: 'Digital'),),
         ),
+        Padding(
+          padding: EdgeInsets.all(10),
+          child: Text("External temp: ${externalTemp}C",
+            style: TextStyle(color: Colors.black, fontFamily: 'Digital'),),
+        ),
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -120,18 +130,18 @@ class _ThermostatPage  extends State<Thermostat>{
               onPressed: increase,
               child: const Text(
                 '+',
-                style: TextStyle(color: Colors.black, fontFamily: 'Digital', fontSize: 45),
+                style: TextStyle(color: Colors.black, fontFamily: 'Digital', fontSize: 200),
               ),
             ),
             Text(
-                "$temp",
+                "$targetTemp",
                 key: const Key("textKey"),
-                style: const TextStyle(color: Colors.black, fontFamily: 'Digital', fontSize: 45)),
+                style: const TextStyle(color: Colors.black, fontFamily: 'Digital', fontSize: 200)),
             TextButton(
               onPressed: decrease,
               child: const Text(
                 '-',
-                style: TextStyle(color: Colors.black, fontFamily: 'Digital', fontSize: 45),
+                style: TextStyle(color: Colors.black, fontFamily: 'Digital', fontSize: 200),
               ),
             ),
           ],

@@ -61,10 +61,10 @@ class _SchedulesForm  extends State<SchedulesForm>{
         );
       },
     );
-
+  
     if (time != null) {
       setState(() {
-        control.text = "${time.hour}:${time.minute}";
+        control.text = "${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}";
       });
     }
   }

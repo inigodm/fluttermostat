@@ -1,9 +1,9 @@
 import 'package:fluthermostat/pages/schedules/listener/ScheduleEvent.dart';
 
 class SchedulesSubscriber{
-  List<Function(ScheduleEvent)> _onCreateSubscribers = List.empty(growable: true);
-  List<Function(ScheduleEvent)> _onSelectedSubscribers = List.empty(growable: true);
-  List<Function(ScheduleEvent)> _onDeletedSubscribers = List.empty(growable: true);
+  final List<Function(ScheduleEvent)> _onCreateSubscribers = List.empty(growable: true);
+  final List<Function(ScheduleEvent)> _onSelectedSubscribers = List.empty(growable: true);
+  final List<Function(ScheduleEvent)> _onDeletedSubscribers = List.empty(growable: true);
 
   void subscribeToCreation(Function(ScheduleEvent) scheduleObserver) {
     _onCreateSubscribers.add(scheduleObserver);
