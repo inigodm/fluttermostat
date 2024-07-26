@@ -8,6 +8,7 @@ import 'package:multi_select_flutter/util/multi_select_item.dart';
 import 'package:multi_select_flutter/util/multi_select_list_type.dart';
 import 'package:numberpicker/numberpicker.dart';
 import 'package:http/http.dart' as http;
+import 'package:uuid/uuid.dart';
 
 import '../../Schedule.dart';
 
@@ -28,7 +29,6 @@ class _SchedulesForm  extends State<SchedulesForm>{
   SchedulesSubscriber subscriber;
 
   TextEditingController initTime = TextEditingController();
-  TextEditingController endTime = TextEditingController();
 
   int desiredTemp = 15;
   List<String> weekDays = [];
@@ -36,8 +36,8 @@ class _SchedulesForm  extends State<SchedulesForm>{
 
   _SchedulesForm(this.bearer, this.baseUrl, this.subscriber){
     subscriber.subscribeToSelection((event) => {
-      setState(() => {
-        _loadFromEvent(event)
+      setState(() {
+        _loadFromEvent(event);
       })
     });
   }
@@ -45,7 +45,6 @@ class _SchedulesForm  extends State<SchedulesForm>{
   void _loadFromEvent(ScheduleEvent event) {
     desiredTemp = event.schedule.desiredTemp;
     initTime.text = event.schedule.timeFrom;
-    endTime.text = event.schedule.timeTo;
     active = event.schedule.active;
     weekDays = event.schedule.weekDays.split("");
   }
@@ -71,9 +70,8 @@ class _SchedulesForm  extends State<SchedulesForm>{
 
   void sendSchedule() async {
     final url = Uri.parse("$baseUrl/schedule");
-    Schedule schedule = Schedule(null,
+    Schedule schedule = Schedule(Uuid().v1(),
         initTime.text,
-        endTime.text,
         weekDays.toString(),
         active,
         desiredTemp);
@@ -83,8 +81,8 @@ class _SchedulesForm  extends State<SchedulesForm>{
           'Authorization': bearer,
         },
         body: jsonEncode( {
+          "id": schedule.id,
           "timeFrom": schedule.timeFrom,
-          "timeTo": schedule.timeTo,
           "active": schedule.active,
           "minTemp": schedule.desiredTemp,
           "weekDays": schedule.weekDays.replaceAll(" ", "").replaceAll("[", "").replaceAll("]", "")
@@ -115,21 +113,6 @@ class _SchedulesForm  extends State<SchedulesForm>{
               )]
           ),
           Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [Expanded(
-                child: TextField(
-                  controller: endTime,
-                  decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: 'End time',
-                      hintText: 'Select end time'
-                  ),
-                  onTap: () => displayTimePicker(context, endTime),
-                ),
-              )]
-          ),
-          Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [const Text("Desired temperature"),
@@ -137,8 +120,8 @@ class _SchedulesForm  extends State<SchedulesForm>{
                 value: desiredTemp,
                 minValue: 10,
                 maxValue: 30,
-                onChanged: (value) => setState(() => {
-                  desiredTemp = value
+                onChanged: (value) => setState(() {
+                  desiredTemp = value;
                 }),
               )],
           ),
@@ -162,7 +145,7 @@ class _SchedulesForm  extends State<SchedulesForm>{
             ),
           ),
           CheckboxListTile(
-            title: Text("Active"),
+            title: const Text("Active"),
             value: active,
             onChanged: (newValue) {
               setState(() {

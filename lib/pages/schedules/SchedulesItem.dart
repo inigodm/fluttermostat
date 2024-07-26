@@ -27,7 +27,7 @@ class _ScheduleItem  extends State<ScheduleItem>{
         children: [
           Checkbox(value: schedule.active, onChanged: (value) => {}),
           GestureDetector(
-            child: Text("Days: ${schedule.weekDays} Temp: ${schedule.desiredTemp} Time: ${schedule.timeFrom}->${schedule.timeTo}ª" ),
+            child: Text("Days: ${schedule.weekDays} Temp: ${schedule.desiredTemp} Time: ${schedule.timeFrom}" ),
             onTap: () => { loadDataCallback(schedule) },
           ),
           IconButton(onPressed: () => {deleteCallback(schedule)},

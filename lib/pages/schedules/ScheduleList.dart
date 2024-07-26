@@ -63,7 +63,6 @@ class _SchedulesList  extends State<SchedulesList>{
                 Schedule(
                     item["id"],
                     item["timeFrom"],
-                    item["timeTo"],
                     "L",
                     item["active"],
                     item["minTemp"]))

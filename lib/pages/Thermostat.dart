@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -113,14 +112,14 @@ class _ThermostatPage  extends State<Thermostat>{
     return Column(
       children: <Widget>[
         Padding(
-          padding: EdgeInsets.all(10),
+          padding: const EdgeInsets.all(10),
           child: Text("Temp: ${roomTemp}C",
-            style: TextStyle(color: Colors.black, fontFamily: 'Digital'),),
+            style: const TextStyle(color: Colors.black, fontFamily: 'Digital'),),
         ),
         Padding(
-          padding: EdgeInsets.all(10),
+          padding: const EdgeInsets.all(10),
           child: Text("External temp: ${externalTemp}C",
-            style: TextStyle(color: Colors.black, fontFamily: 'Digital'),),
+            style: const TextStyle(color: Colors.black, fontFamily: 'Digital'),),
         ),
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,

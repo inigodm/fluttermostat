@@ -8,7 +8,7 @@ class SchedulesPage extends StatefulWidget {
   String bearer;
   String baseUrl;
 
-  SchedulesPage(this.baseUrl, this.bearer);
+  SchedulesPage(this.baseUrl, this.bearer, {super.key});
 
   @override
   State<StatefulWidget> createState() => _SchedulesPage(bearer, baseUrl);
