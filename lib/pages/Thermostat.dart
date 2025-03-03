@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:fluthermostat/main.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:latlong2/latlong.dart';
 
 class Thermostat extends StatefulWidget {
 
@@ -15,12 +16,12 @@ class Thermostat extends StatefulWidget {
 
 class _ThermostatPage  extends State<Thermostat>{
   int targetTemp = 10;
+  Color statusColor = Colors.grey;
   String externalTemp = "0.00";
   String roomTemp = "0.00";
   Timer? timer;
 
   _ThermostatPage(){
-    getDesiredValue();
     refreshThermostateStatus();
   }
 
@@ -37,20 +38,6 @@ class _ThermostatPage  extends State<Thermostat>{
     super.dispose();
   }
 
-  void getDesiredValue() async {
-    final url = Uri.parse("${Preferences.baseUrl}/temperature");
-    final response = await http.get(url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': Preferences.bearer,
-        });
-    setState(() {
-      if (response.statusCode == 200) {
-        targetTemp = (jsonDecode(response.body)['value']['temp']/100).round();
-      }
-    });
-  }
-
   void increase() async {
     final url = Uri.parse("${Preferences.baseUrl}/temperature/increment");
     final response = await http.put(url,
@@ -62,10 +49,7 @@ class _ThermostatPage  extends State<Thermostat>{
           "temperature": 100,
         }));
     if (response.statusCode == 200) {
-      getDesiredValue();
-      setState(() {
-        targetTemp++;
-      });
+      refreshThermostateStatus();
     }
   }
 
@@ -80,11 +64,12 @@ class _ThermostatPage  extends State<Thermostat>{
           "temperature": 100,
         }));
     if (response.statusCode == 200) {
-      getDesiredValue();
-      setState(() {
-        targetTemp--;
-      });
+      refreshThermostateStatus();
     }
+  }
+
+  void setTemp(int newTemp) {
+    targetTemp = newTemp;
   }
 
   void refreshThermostateStatus() async {
@@ -96,10 +81,12 @@ class _ThermostatPage  extends State<Thermostat>{
         });
     setState(() {
       if (response.statusCode == 200) {
-        String tempStr = jsonDecode(response.body)['value']['roomTemperature']['temp'].toString();
+        var status = jsonDecode(response.body)['value'];
+        String tempStr = status['roomTemperature']['temp'].toString();
         roomTemp = "${tempStr.substring(0, tempStr.length - 2)}.${tempStr.substring(tempStr.length - 2)}";
-        targetTemp = (jsonDecode(response.body)['value']['targetTemperature']['temp'] / 100).toInt();
-        externalTemp = jsonDecode(response.body)['value']['externalTemperature']['temp'].toString();
+        targetTemp = (status['targetTemperature']['temp'] / 100).toInt();
+        externalTemp = status['externalTemperature']['temp'].toString();
+        statusColor = status['active'] ? Colors.deepOrangeAccent: Colors.blueGrey ;
       }
     });
   }
@@ -111,12 +98,17 @@ class _ThermostatPage  extends State<Thermostat>{
         Padding(
           padding: const EdgeInsets.all(10),
           child: Text("Temp: ${roomTemp}C",
-            style: const TextStyle(color: Colors.black, fontFamily: 'Digital'),),
+            style: TextStyle(
+                color: Colors.black,
+                fontFamily: 'Digital',
+                backgroundColor: statusColor)),
         ),
         Padding(
           padding: const EdgeInsets.all(10),
           child: Text("External temp: ${externalTemp}C",
-            style: const TextStyle(color: Colors.black, fontFamily: 'Digital'),),
+            style: const TextStyle(
+                color: Colors.black,
+                fontFamily: 'Digital'),),
         ),
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
