@@ -17,8 +17,8 @@ class Preferences {
   static late String userId = '';
   static late String role = '';
   static String baseUrl = Platform.isAndroid
-      ? "http://192.168.1.134:8080"
-      : "http://localhost:8080";
+      ? "http://127.0.0.1:8080"
+      : "http://127.0.0.1:8080";
 
 
   static setBearer(String bearer) async {

@@ -5,6 +5,7 @@ import 'package:fluthermostat/pages/GraphPage.dart';
 import 'package:fluthermostat/pages/MapPage.dart';
 import 'package:fluthermostat/pages/schedules/SchedulesPage.dart';
 import 'package:fluthermostat/pages/Thermostat.dart';
+import 'package:fluthermostat/pages/FileUploadService.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
@@ -57,10 +58,12 @@ class _HomePageState extends State<HomePage> {
     _pages.add(Thermostat());
     _pages.add(SchedulesPage());
     _pages.add(GraphPage.build());
+    _pages.add(FileUploadScreen());
     var buttons = [
       BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
       BottomNavigationBarItem(icon: Icon(Icons.schedule), label: 'Schedules'),
       BottomNavigationBarItem(icon: Icon(Icons.leaderboard), label: 'Graphs'),
+      BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Tickets'),
     ];
     if (Preferences.getRole() == 'ADMIN') {
       _pages.add(MapPage());
